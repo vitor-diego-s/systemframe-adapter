@@ -1,0 +1,175 @@
+# Adapter config to "mirror" incident state between internal <> external systems.
+# Recommended: update track_incident.py to iterate cfg["hosts"] (instead of env-prefixed REMOTE_HOSTS).
+adapter:
+  name: incident-mirror
+  mode: active                # active | passive (passive only listens to webhooks)
+  reconcile_interval: 300     # seconds between full reconciliation runs
+  default_sync_direction: bidirectional  # one-way-internal | one-way-external | bidirectional
+  # conflict_resolution:
+  #   strategy: last_write_wins   # last_write_wins | prefer_internal | prefer_external | custom
+  #   clock_skew_seconds: 120
+
+# logging:
+#   level: INFO
+#   file: /var/log/incident-mirror/adapter.log
+
+# metrics:
+#   prometheus:
+#     enabled: true
+#     host: 0.0.0.0
+#     port: 8000
+#     path: /metrics
+
+retry:
+  attempts: 3
+  backoff_base_seconds: 2
+  backoff_multiplier: 2
+  max_backoff_seconds: 30
+
+# rate_limit:
+#   requests_per_minute: 600
+
+# Host definitions used by the adapter. Each host is a source or target for incidents.
+hosts:
+  - id: internal_glpi
+    name: "GLPI Internal"
+    role: internal             # internal | external
+    platform: glpi
+    endpoint: "https://glpi.internal.example.com/apirest.php"
+    port: 443
+    protocol: https
+    credentials_env:
+      api_token: GLPI_APP_TOKEN
+      user_token: GLPI_USER_TOKEN
+    polling:
+      enabled: false
+      interval: 60             # seconds
+      limit: 100
+      criteria:
+        - field: 12           # GLPI status field id
+          searchtype: equals
+          value: 1
+    webhook:
+      enabled: true
+      path: /hooks/glpi
+      secret_env: GLPI_WEBHOOK_SECRET
+    # mappings:
+    #   id_field: "2"           # the field key in GLPI response for ticket id
+    #   title_field: "1"
+    #   status_field: "12"
+    #   group_field: "80"
+    #   opened_at_field: "15"
+    #   status_map:              # map between GLPI numeric codes and canonical names
+    #     "1": new
+    #     "2": processing
+    #     "3": waiting
+    #     "4": solved
+    #     "5": closed
+
+  - id: external_glpi
+    name: "GLPI External"
+    role: external             # internal | external
+    platform: glpi
+    endpoint: "https://glpi.external.example.com/apirest.php"
+    port: 443
+    protocol: https
+    credentials_env:
+      api_token: GLPI_APP_TOKEN
+      user_token: GLPI_USER_TOKEN
+    polling:
+      enabled: true
+      interval: 60             # seconds
+      limit: 100
+      criteria:
+        - field: 12           # GLPI status field id
+          searchtype: equals
+          value: 1
+    webhook:
+      enabled: false
+      path: /hooks/glpi
+      secret_env: GLPI_WEBHOOK_SECRET
+    # mappings:
+    #   id_field: "2"           # the field key in GLPI response for ticket id
+    #   title_field: "1"
+    #   status_field: "12"
+    #   group_field: "80"
+    #   opened_at_field: "15"
+    #   status_map:              # map between GLPI numeric codes and canonical names
+    #     "1": new
+    #     "2": processing
+    #     "3": waiting
+    #     "4": solved
+    #     "5": closed
+
+  # - id: external_servicenow
+  #   name: "ServiceNow Customer"
+  #   role: external
+  #   platform: servicenow
+  #   endpoint: "https://customer.service-now.example.com/api/now/table/incident"
+  #   port: 443
+  #   protocol: https
+  #   credentials_env:
+  #     user: SN_USER
+  #     password: SN_PASSWORD
+  #     token: SN_TOKEN        # optional bearer token
+  #   polling:
+  #     enabled: true
+  #     interval: 120
+  #     limit: 50
+  #     filters:
+  #       - field: state
+  #         op: IN
+  #         value: ["1","2"]    # example
+  #   webhook:
+  #     enabled: true
+  #     path: /hooks/servicenow
+  #     secret_env: SN_WEBHOOK_SECRET
+  #   mappings:
+  #     id_field: "sys_id"
+  #     title_field: "short_description"
+  #     status_field: "state"
+  #     opened_at_field: "opened_at"
+  #     status_map:
+  #       "1": new
+  #       "2": processing
+  #       "3": waiting
+  #       "6": solved
+  #       "7": closed
+
+sync:
+  # Per-platform sync rules (optional overrides)
+  rules:
+    - name: glpi->glpi
+      source: external_glpi
+      target: internal_glpi
+      direction: external_to_internal
+      enabled: true
+      # transform:
+      #   - type: status_map           # use mappings.status_map from each host
+      #   - type: field_copy
+      #     mappings:
+      #       "1": "short_description" # GLPI title -> SN short_description
+      #       "21": "description"      # GLPI message -> SN description
+      on_conflict:
+        action: merge                 # overwrite | merge | skip
+
+# reconciliation:
+#   window_days: 7   # look back this many days for reconciliation
+#   batch_size: 100
+
+# security:
+#   verify_ssl: true
+#   ca_bundle_path: ""   # optional custom CA bundle
+
+# # Optional: email/alerting for fatal sync errors
+# alerts:
+#   email:
+#     enabled: false
+#     to:
+#       - ops@example.com
+#     from: adapter@example.com
+#     smtp:
+#       host: smtp.example.com
+#       port: 587
+#       user_env: SMTP_USER
+#       pass_env: SMTP_PASS
