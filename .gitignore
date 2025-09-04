@@ -1,0 +1,110 @@
+# --- Python bytecode / caches ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- C extensions ---
+*.so
+*.pyd
+*.dll
+*.dylib
+
+# --- Packaging / build artifacts ---
+.Python
+build/
+dist/
+downloads/
+eggs/
+.eggs/
+sdist/
+wheels/
+share/python-wheels/
+pip-wheel-metadata/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# --- Installer logs ---
+pip-log.txt
+pip-delete-this-directory.txt
+
+# --- Test / coverage ---
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.cache/
+pytestdebug.log
+*.cover
+*.py,cover
+.hypothesis/
+
+# --- Type checkers / linters ---
+.mypy_cache/
+.pytype/
+.pyre/
+.ruff_cache/
+
+# --- Jupyter / IPython ---
+.ipynb_checkpoints/
+profile_default/
+ipython_config.py
+
+# --- Virtual environments ---
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+.conda/
+.python-version  # pyenv/ASDF
+
+# --- dotenv / secrets ---
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# --- Logs / tmp ---
+*.log
+log/
+logs/
+tmp/
+.tmp/
+
+# --- Databases (local dev) ---
+*.sqlite
+*.sqlite3
+*.db
+.psql_history
+
+# --- Streamlit (local app settings/secrets) ---
+.streamlit/
+
+# --- Editors / IDE ---
+.vscode/
+.idea/
+*.code-workspace
+*.sublime-*
+
+# --- OS junk ---
+.DS_Store
+**/.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+.Spotlight-V100
+.Trashes
+
+# --- Docker (local overrides / data) ---
+docker-compose.override.yml
+docker-data/
+pgdata/
+
+# --- Project-specific artifacts ---
+/streamlit.zip
+/project.zip
+
